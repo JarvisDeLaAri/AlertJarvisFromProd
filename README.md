@@ -7,8 +7,8 @@ Secure, zero-credential alert pipeline from a production server to [JarvisHub](h
 ```
 ┌──────────────┐     SSH (forced command)     ┌──────────────┐     HTTP (localhost)     ┌──────────────┐
 │  Prod Server │ ──────────────────────────►  │  Hub Server  │ ──────────────────────►  │  JarvisHub   │
-│              │    prodcaller user            │              │    POST /notify          │              │
-│ alert-       │    (key-only, no shell,      │ prodcaller-  │                          │ Wakes Jarvis │
+│              │    <ALERT_USER> user            │              │    POST /notify          │              │
+│ alert-       │    (key-only, no shell,      │ <ALERT_USER>-  │                          │ Wakes Jarvis │
 │ jarvis.sh    │     no forwarding)           │ alert.sh     │                          │ → WhatsApp   │
 └──────────────┘                              └──────────────┘                          └──────────────┘
 ```
@@ -17,11 +17,11 @@ Secure, zero-credential alert pipeline from a production server to [JarvisHub](h
 
 1. **Monitoring scripts** on prod detect an issue (service down, rootkit found, suspicious auth, etc.)
 2. They call `alert-jarvis.sh` with source, title, message, and priority
-3. The script SSHes into the hub server as `prodcaller` — a **locked-down user** with:
-   - Forced command via `authorized_keys` (can ONLY run `prodcaller-alert.sh`)
+3. The script SSHes into the hub server as `<ALERT_USER>` — a **locked-down user** with:
+   - Forced command via `authorized_keys` (can ONLY run `<ALERT_USER>-alert.sh`)
    - No port forwarding, no X11, no agent forwarding, no PTY
    - Key-only authentication
-4. `prodcaller-alert.sh` parses the alert and POSTs to [JarvisHub](https://github.com/JarvisDeLaAri/YourJarvisHub) on localhost
+4. `<ALERT_USER>-alert.sh` parses the alert and POSTs to [JarvisHub](https://github.com/JarvisDeLaAri/YourJarvisHub) on localhost
 5. JarvisHub wakes the AI assistant → forwards alert to WhatsApp
 
 ## Security
@@ -37,7 +37,7 @@ Secure, zero-credential alert pipeline from a production server to [JarvisHub](h
 | File | Where | What |
 |------|-------|------|
 | `alert-jarvis.sh` | Prod server (`/usr/local/bin/`) | Sends alerts via SSH |
-| `prodcaller-alert.sh` | Hub server (`/usr/local/bin/`) | Receives alerts, posts to JarvisHub |
+| `<ALERT_USER>-alert.sh` | Hub server (`/usr/local/bin/`) | Receives alerts, posts to JarvisHub |
 
 ## Setup
 
@@ -45,41 +45,41 @@ Secure, zero-credential alert pipeline from a production server to [JarvisHub](h
 
 1. Create the restricted user:
 ```bash
-useradd --system --shell /bin/bash --home-dir /var/lib/prodcaller --create-home prodcaller
+useradd --system --shell /bin/bash --home-dir /var/lib/<ALERT_USER> --create-home <ALERT_USER>
 ```
 
 2. Generate SSH keypair (or generate on prod and copy public key here):
 ```bash
-ssh-keygen -t ed25519 -f /var/lib/prodcaller/.ssh/id_prodcaller -N "" -C "prodcaller"
+ssh-keygen -t ed25519 -f /var/lib/<ALERT_USER>/.ssh/id_<ALERT_USER> -N "" -C "<ALERT_USER>"
 ```
 
 3. Set up authorized_keys with forced command:
 ```bash
-echo 'command="/usr/local/bin/prodcaller-alert.sh",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty <PUBLIC_KEY>' > /var/lib/prodcaller/.ssh/authorized_keys
-chmod 700 /var/lib/prodcaller/.ssh
-chmod 600 /var/lib/prodcaller/.ssh/authorized_keys
-chown -R prodcaller:prodcaller /var/lib/prodcaller
+echo 'command="/usr/local/bin/<ALERT_USER>-alert.sh",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty <PUBLIC_KEY>' > /var/lib/<ALERT_USER>/.ssh/authorized_keys
+chmod 700 /var/lib/<ALERT_USER>/.ssh
+chmod 600 /var/lib/<ALERT_USER>/.ssh/authorized_keys
+chown -R <ALERT_USER>:<ALERT_USER> /var/lib/<ALERT_USER>
 ```
 
-4. Add `prodcaller` to SSH AllowUsers:
+4. Add `<ALERT_USER>` to SSH AllowUsers:
 ```bash
 # In your sshd hardened config:
-AllowUsers root prodcaller
+AllowUsers <YOUR_USER> <ALERT_USER>
 ```
 
-5. Install `prodcaller-alert.sh`:
+5. Install `<ALERT_USER>-alert.sh`:
 ```bash
-cp prodcaller-alert.sh /usr/local/bin/
-chmod 755 /usr/local/bin/prodcaller-alert.sh
+cp <ALERT_USER>-alert.sh /usr/local/bin/
+chmod 755 /usr/local/bin/<ALERT_USER>-alert.sh
 ```
 
-6. Edit `prodcaller-alert.sh` — set `HUB_URL` to your JarvisHub port.
+6. Edit `<ALERT_USER>-alert.sh` — set `HUB_URL` to your JarvisHub port.
 
 7. Whitelist prod server IP in fail2ban (`ignoreip` in jail.local).
 
 ### On the Prod Server
 
-1. Copy the private key to `/root/.ssh/id_prodcaller` (chmod 600).
+1. Copy the private key to `~/.ssh/id_<ALERT_USER>` (chmod 600).
 
 2. Install `alert-jarvis.sh`:
 ```bash

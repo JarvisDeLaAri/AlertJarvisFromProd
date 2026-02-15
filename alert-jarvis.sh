@@ -21,8 +21,8 @@ PRIORITY="${4:-normal}"
 # SSH_HOST: hub server IP/hostname
 # SSH_PORT: hub server SSH port
 
-SSH_USER="prodcaller"
-SSH_KEY="/root/.ssh/id_prodcaller"
+SSH_USER="<ALERT_USER>"
+SSH_KEY="~/.ssh/id_<ALERT_USER>"
 SSH_HOST="<HUB_SERVER_IP>"
 SSH_PORT="<HUB_SSH_PORT>"
 
