@@ -99,9 +99,16 @@ alert-jarvis.sh "test" "🧪 Test" "Hello from prod!" "normal"
 Call `alert-jarvis.sh` from any monitoring script. Examples:
 
 ```bash
-# Service health check
+# Service health check (systemd services)
 if ! systemctl is-active --quiet caddy; then
     alert-jarvis.sh "service-health" "🚨 Service DOWN" "Caddy is not running" "urgent"
+fi
+
+# Firewall check (UFW is NOT a daemon — don't use systemctl!)
+# On Debian/Ubuntu, UFW runs once at boot to load iptables rules then exits.
+# systemctl is-active ufw returns "inactive" even when the firewall is working.
+if ! ufw status 2>/dev/null | grep -q "Status: active"; then
+    alert-jarvis.sh "service-health" "🚨 Firewall DOWN" "UFW is not active" "urgent"
 fi
 
 # Login notification (PAM)
