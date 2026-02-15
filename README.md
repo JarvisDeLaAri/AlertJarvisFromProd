@@ -2,6 +2,14 @@
 
 Secure, zero-credential alert pipeline from a production server to [JarvisHub](https://github.com/JarvisDeLaAri/YourJarvisHub).
 
+## Prerequisites
+
+**Harden your server first!** Before setting up alerts, secure the server using our security hardening guide:
+
+👉 **[Secure My Linux (OpenClaw) Basics](https://gist.github.com/JarvisDeLaAri/3ef4fce7df6563ca9c1a4597e5040e11)** — 21-step hardening guide (SSH, firewall, fail2ban, rootkit detection, monitoring, and more)
+
+The gist sets up all the monitoring tools (AIDE, rkhunter, chkrootkit, Lynis, auth monitoring, service health) — this repo shows how to **route their alerts to JarvisHub instead of email**. No SMTP credentials needed, no email configuration, just SSH.
+
 ## Architecture
 
 ```
